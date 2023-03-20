@@ -1,4 +1,5 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Body
+from datetime import datetime
 
 from db.database import engine
 from db.models import RequestLog
@@ -14,12 +15,23 @@ from utils.weather_api_utils import get_weather_by_date
 app = FastAPI()
 
 
-@app.get("/weather/{date}")
-async def get_weather(date: str):
-    service_response = await get_weather_by_date(date)
-    base_response = service_response["days"][0]
+@app.get("/weather/{str_date}")
+async def get_weather(str_date):
+    try:
+        is_valid = datetime.strptime(str_date, "%Y-%m-%d")
+    except ValueError:
+        is_valid = False
 
-    return base_response
+    if is_valid:
+        service_response = await get_weather_by_date(str_date)
+        base_response = service_response["days"][0]
+
+        return base_response
+    else:
+        return {
+                "status": "Not OK",
+                "error": "Value Error"
+            }
 
 
 @app.get("/requests")
